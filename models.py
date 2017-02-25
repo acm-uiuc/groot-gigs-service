@@ -8,8 +8,41 @@ this license in a file with the distribution.
 '''
 
 from flask_sqlalchemy import SQLAlchemy
+from datetime import datetime
 db = SQLAlchemy()
 
 
 class Gig(db.Model):
     __tableName__ = "gigs"
+    id = db.Column(db.Integer, primary_key=True)
+    issuer = db.Column(db.String(100))
+    description = db.Column(db.String(150))
+    credits = db.Column(db.Float())
+    admin_task = db.Column(db.Boolean, default=False)
+    claims = db.relationship('Claim', backref='gig', lazy='dynamic')
+    created_at = db.Column(db.DateTime, default=datetime.now, nullable=False)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "issuer": self.issuer,
+            "description": self.description,
+            "credits": self.credits,
+            "created_at": self.created_at
+        }
+
+
+class Claim(db.Model):
+    __tableName__ = "claims"
+    id = db.Column(db.Integer, primary_key=True)
+    claimant = db.Column(db.String(100))
+    fulfilled = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime, default=datetime.now, nullable=False)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "claimant": self.claimant,
+            "fulfilled": self.fulfilled,
+            "created_at": self.created_at
+        }

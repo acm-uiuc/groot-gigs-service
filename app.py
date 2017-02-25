@@ -24,8 +24,36 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://{}:{}@{}/{}'.format(
 )
 app.config['JSONIFY_MIMETYPE'] = 'application/json; charset=UTF-8'
 
-PORT = 42069
-DEBUG = os.environ.get('MEME_DEBUG', False)
+PORT = 8964
+DEBUG = os.environ.get('GIG_DEBUG', False)
+
+
+class GigResource(Resource):
+    def get(self):
+        ''' Endpoint for getting Gig information '''
+        pass
+
+    def post(self):
+        ''' Endpoint for creating a Gig '''
+        pass
+
+    def delete(self):
+        ''' Endpoint for deleting a Gig '''
+        pass
+
+
+class ClaimResource(Resource):
+    def get(self):
+        ''' Endpoint for getting Claim information '''
+        pass
+
+    def post(self):
+        ''' Endpoint for creating a Claim '''
+        pass
+
+    def put(self):
+        ''' Endpoint for deleting accepting/rejecting a Claim '''
+        pass
 
 api = Api(app)
 
