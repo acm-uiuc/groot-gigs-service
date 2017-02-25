@@ -20,6 +20,7 @@ class Gig(db.Model):
     credits = db.Column(db.Float())
     admin_task = db.Column(db.Boolean, default=False)
     claims = db.relationship('Claim', backref='gig', lazy='dynamic')
+    active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.now, nullable=False)
 
     def to_dict(self):
@@ -28,7 +29,8 @@ class Gig(db.Model):
             "issuer": self.issuer,
             "description": self.description,
             "credits": self.credits,
-            "created_at": self.created_at
+            "created_at": self.created_at,
+            "active": self.active
         }
 
 

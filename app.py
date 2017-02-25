@@ -29,34 +29,35 @@ DEBUG = os.environ.get('GIG_DEBUG', False)
 
 
 class GigResource(Resource):
-    def get(self):
+    def get(self, gigid=None):
         ''' Endpoint for getting Gig information '''
         pass
 
-    def post(self):
+    def post(self, gigid=None):
         ''' Endpoint for creating a Gig '''
         pass
 
-    def delete(self):
+    def delete(self, gigid):
         ''' Endpoint for deleting a Gig '''
         pass
 
 
 class ClaimResource(Resource):
-    def get(self):
+    def get(self, claimid=None):
         ''' Endpoint for getting Claim information '''
         pass
 
-    def post(self):
+    def post(self, claimid=None):
         ''' Endpoint for creating a Claim '''
         pass
 
-    def put(self):
+    def put(self, claimid):
         ''' Endpoint for deleting accepting/rejecting a Claim '''
         pass
 
 api = Api(app)
-
+api.add_resource(GigResource, '/gigs', '/gigs/<gigid>')
+api.add_resource(ClaimResource, '/gigs/claims', '/gigs/claims/<claimid>')
 db.init_app(app)
 db.create_all(app=app)
 
