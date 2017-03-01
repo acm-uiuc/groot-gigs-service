@@ -39,6 +39,7 @@ class Claim(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     claimant = db.Column(db.String(100))
     fulfilled = db.Column(db.Boolean, default=False)
+    gig_id = db.Column(db.Integer, db.ForeignKey('gigs.id'))
     created_at = db.Column(db.DateTime, default=datetime.now, nullable=False)
 
     def to_dict(self):
@@ -46,5 +47,6 @@ class Claim(db.Model):
             "id": self.id,
             "claimant": self.claimant,
             "fulfilled": self.fulfilled,
+            "gig_id": self.gig_id,
             "created_at": self.created_at
         }
