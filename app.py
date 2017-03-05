@@ -52,6 +52,10 @@ def validate_claim_id(x):
         raise ValueError("Invalid claim id.")
 
 
+def create_transaction(netid, amount):
+    pass
+
+
 class GigResource(Resource):
     def get(self, gigid=None):
         ''' Endpoint for getting Gig information '''
@@ -85,6 +89,27 @@ class GigResource(Resource):
         db.session.add(gig)
         db.session.commit()
         return jsonify(gig.to_dict())
+
+    def put(self, gigid):
+        ''' Endpoint for activating/deactivating a gig '''
+        parser = reqparse.RequestParser()
+        parser.add_argument('active', location='json', type=bool,
+                            required=True)
+        args = parser.parse_args()
+
+        try:
+            validate_gig_id(gigid)
+        except ValueError:
+            return send_error('Invalid gid id')
+
+        gig = Gig.query.filter_by(id=gigid).first()
+        gig.active = args.active
+
+        db.session.add(gig)
+        db.session.commit()
+
+        active_str = 'active' if args.active else 'closed'
+        return send_success('Set gig {} to be {}'.format(gigid, active_str))
 
     def delete(self, gigid):
         ''' Endpoint for deleting a Gig '''
@@ -136,8 +161,32 @@ class ClaimResource(Resource):
         return jsonify(claim.to_dict())
 
     def put(self, claimid):
-        ''' Endpoint for deleting accepting/rejecting a Claim '''
-        pass
+        ''' Endpoint for accepting a Claim '''
+        try:
+            validate_claim_id(claimid)
+        except ValueError:
+            return send_error("Invalid claim id")
+
+        claim = Claim.query.filter_by(id=claimid).first()
+
+        # Don't allow double-fulfills
+        if claim.fulfilled:
+            return send_error("Claim already fulfilled")
+
+        gig = claim.gig
+
+        # Take credits from creator
+        if not gig.admin_task:
+            create_transaction(gig.issuer, -1 * gig.credits)
+        # Give credits to claimant
+        create_transaction(claim.claimant, gig.credits)
+
+        # Mark claim as fulfilled
+        claim.fulfilled = True
+        db.session.add(claim)
+        db.session.commit()
+
+        return send_success("Fulfilled claim {}".format(claimid))
 
     def delete(self, claimid):
         try:
