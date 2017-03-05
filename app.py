@@ -10,7 +10,8 @@ from flask import Flask, jsonify
 from flask_restful import Resource, Api, reqparse
 import os
 from models import db, Gig, Claim
-from settings import MYSQL, GROOT_ACCESS_TOKEN, GROOT_SERVICES_URL
+from settings import MYSQL
+from utils import send_error, send_success
 import logging
 logger = logging.getLogger('groot_meme_service')
 
@@ -43,10 +44,28 @@ def validate_gig_id(x):
         raise ValueError("Invalid gig id.")
 
 
+def validate_claim_id(x):
+    claim = Claim.query.filter_by(id=x).first()
+    if claim:
+        return x
+    else:
+        raise ValueError("Invalid claim id.")
+
+
 class GigResource(Resource):
     def get(self, gigid=None):
         ''' Endpoint for getting Gig information '''
-        pass
+        # Return single gig
+        if gigid:
+            try:
+                validate_gig_id(gigid)
+            except ValueError:
+                return send_error('Invalid gid id')
+            gig = Gig.query.filter_by(id=gigid).first()
+            return jsonify(gig.to_dict())
+        # Return all gigs
+        else:
+            return jsonify([g.to_dict() for g in Gig.query.all()])
 
     def post(self, gigid=None):
         ''' Endpoint for creating a Gig '''
@@ -69,17 +88,45 @@ class GigResource(Resource):
 
     def delete(self, gigid):
         ''' Endpoint for deleting a Gig '''
-        pass
+        try:
+            validate_gig_id(gigid)
+        except ValueError:
+            return send_error('Invalid gid id')
+
+        gig = Gig.query.filter_by(id=gigid).first()
+        db.session.delete(gig)
+        db.session.commit()
+        return send_success('Deleted gig {}'.format(gigid))
 
 
 class ClaimResource(Resource):
     def get(self, claimid=None):
         ''' Endpoint for getting Claim information '''
         parser = reqparse.RequestParser()
+        parser.add_argument('gig_id', location='args')
+        args = parser.parse_args()
+
+        claims = Claim.query
+
+        if args.gig_id:
+            claims = claims.filter_by(gig_id=args.gig_id)
+        return jsonify([c.to_dict() for c in claims.all()])
+
+    def post(self, claimid=None):
+        ''' Endpoint for creating a Claim '''
+        parser = reqparse.RequestParser()
         parser.add_argument('claimant', location='json', required=True)
         parser.add_argument('gig_id', location='json', required=True,
                             type=validate_gig_id)
         args = parser.parse_args()
+
+        try:
+            validate_gig_id(args.gig_id)
+        except ValueError:
+            return send_error('Invalid gid id')
+        gig = Gig.filter_by(gig_id=args.gig_id).first()
+        if not gig.active:
+            return send_error("Cannot claim an inactive gig")
 
         claim = Claim(claimant=args.claimant,
                       gig_id=args.gig_id)
@@ -88,13 +135,20 @@ class ClaimResource(Resource):
 
         return jsonify(claim.to_dict())
 
-    def post(self, claimid=None):
-        ''' Endpoint for creating a Claim '''
-        pass
-
     def put(self, claimid):
         ''' Endpoint for deleting accepting/rejecting a Claim '''
         pass
+
+    def delete(self, claimid):
+        try:
+            validate_claim_id(claimid)
+        except ValueError:
+            return send_error("Invalid claim id")
+
+        claim = Claim.query.filter_by(id=claimid).first()
+        db.session.delete(claim)
+        db.session.commit()
+        return send_success('Deleted claim {}'.format(claimid))
 
 api = Api(app)
 api.add_resource(GigResource, '/gigs', '/gigs/<gigid>')
