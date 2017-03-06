@@ -10,8 +10,9 @@ from flask import Flask, jsonify
 from flask_restful import Resource, Api, reqparse
 import os
 from models import db, Gig, Claim
-from settings import MYSQL
+from settings import MYSQL, GROOT_ACCESS_TOKEN, GROOT_SERVICES_URL
 from utils import send_error, send_success
+import requests
 import logging
 logger = logging.getLogger('groot_meme_service')
 
@@ -52,8 +53,22 @@ def validate_claim_id(x):
         raise ValueError("Invalid claim id.")
 
 
-def create_transaction(netid, amount):
-    pass
+def create_transaction(netid, amount, description=""):
+    r = requests.post(
+        headers={
+            'Authorization': GROOT_ACCESS_TOKEN,
+            'Accept': 'application/json'
+        },
+        url=GROOT_SERVICES_URL + '/credits/transactions',
+        data={
+            'netid': netid,
+            'amount': amount,
+            'description': description
+        }
+    )
+    if r.status_code != 200:
+        return None
+    return r.json()
 
 
 class GigResource(Resource):
@@ -64,7 +79,7 @@ class GigResource(Resource):
             try:
                 validate_gig_id(gigid)
             except ValueError:
-                return send_error('Invalid gid id')
+                return send_error('Invalid gid id', 404)
             gig = Gig.query.filter_by(id=gigid).first()
             return jsonify(gig.to_dict())
         # Return all gigs
@@ -100,7 +115,7 @@ class GigResource(Resource):
         try:
             validate_gig_id(gigid)
         except ValueError:
-            return send_error('Invalid gid id')
+            return send_error('Invalid gid id', 404)
 
         gig = Gig.query.filter_by(id=gigid).first()
         gig.active = args.active
@@ -116,7 +131,7 @@ class GigResource(Resource):
         try:
             validate_gig_id(gigid)
         except ValueError:
-            return send_error('Invalid gid id')
+            return send_error('Invalid gid id', 404)
 
         gig = Gig.query.filter_by(id=gigid).first()
         db.session.delete(gig)
@@ -148,7 +163,7 @@ class ClaimResource(Resource):
         try:
             validate_gig_id(args.gig_id)
         except ValueError:
-            return send_error('Invalid gid id')
+            return send_error('Invalid gid id', 404)
         gig = Gig.filter_by(gig_id=args.gig_id).first()
         if not gig.active:
             return send_error("Cannot claim an inactive gig")
@@ -177,9 +192,13 @@ class ClaimResource(Resource):
 
         # Take credits from creator
         if not gig.admin_task:
-            create_transaction(gig.issuer, -1 * gig.credits)
+            create_transaction(gig.issuer,
+                               -1 * gig.credits,
+                               'Fulfilling gig {}'.format(gig.id))
         # Give credits to claimant
-        create_transaction(claim.claimant, gig.credits)
+        create_transaction(claim.claimant,
+                           gig.credits,
+                           'Credited for gig {}'.format(gig.id))
 
         # Mark claim as fulfilled
         claim.fulfilled = True
@@ -192,7 +211,7 @@ class ClaimResource(Resource):
         try:
             validate_claim_id(claimid)
         except ValueError:
-            return send_error("Invalid claim id")
+            return send_error("Invalid claim id", 404)
 
         claim = Claim.query.filter_by(id=claimid).first()
         db.session.delete(claim)
