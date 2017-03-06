@@ -14,6 +14,7 @@ from settings import MYSQL, GROOT_ACCESS_TOKEN, GROOT_SERVICES_URL
 from utils import send_error, send_success
 import requests
 import logging
+import json
 logger = logging.getLogger('groot_meme_service')
 
 app = Flask(__name__)
@@ -32,7 +33,7 @@ DEBUG = os.environ.get('GIG_DEBUG', False)
 
 def validate_gig_credits(x):
     x = float(x)
-    if x < 0:
+    if x <= 0:
         raise ValueError("Credits must be positive")
     return x
 
@@ -54,17 +55,17 @@ def validate_claim_id(x):
 
 
 def create_transaction(netid, amount, description=""):
+    payload = json.dumps({
+                'netid': netid,
+                'amount': amount,
+                'description': description})
     r = requests.post(
         headers={
             'Authorization': GROOT_ACCESS_TOKEN,
-            'Accept': 'application/json'
+            'Content-Type': 'application/json; charset=UTF-8'
         },
         url=GROOT_SERVICES_URL + '/credits/transactions',
-        data={
-            'netid': netid,
-            'amount': amount,
-            'description': description
-        }
+        data=payload
     )
     if r.status_code != 200:
         return None
@@ -164,9 +165,11 @@ class ClaimResource(Resource):
             validate_gig_id(args.gig_id)
         except ValueError:
             return send_error('Invalid gid id', 404)
-        gig = Gig.filter_by(gig_id=args.gig_id).first()
+        gig = Gig.query.filter_by(id=args.gig_id).first()
         if not gig.active:
             return send_error("Cannot claim an inactive gig")
+        if gig.issuer == args.claimant:
+            return send_error("Cannot claim your own gig")
 
         claim = Claim(claimant=args.claimant,
                       gig_id=args.gig_id)
@@ -192,13 +195,17 @@ class ClaimResource(Resource):
 
         # Take credits from creator
         if not gig.admin_task:
-            create_transaction(gig.issuer,
-                               -1 * gig.credits,
-                               'Fulfilling gig {}'.format(gig.id))
+            res = create_transaction(gig.issuer,
+                                     -1 * gig.credits,
+                                     'Fulfilling gig {}'.format(gig.id))
+            if res is None:
+                return send_error("Unable to create transaction")
         # Give credits to claimant
-        create_transaction(claim.claimant,
-                           gig.credits,
-                           'Credited for gig {}'.format(gig.id))
+        res = create_transaction(claim.claimant,
+                                 gig.credits,
+                                 'Credited for gig {}'.format(gig.id))
+        if res is None:
+            return send_error("Unable to create transaction")
 
         # Mark claim as fulfilled
         claim.fulfilled = True

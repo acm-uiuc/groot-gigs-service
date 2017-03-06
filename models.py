@@ -28,7 +28,7 @@ class Gig(db.Model):
             "issuer": self.issuer,
             "description": self.description,
             "credits": self.credits,
-            "created_at": self.created_at,
+            "created_at": self.created_at.isoformat(),
             "active": self.active
         }
 
@@ -46,5 +46,5 @@ class Claim(db.Model):
             "claimant": self.claimant,
             "fulfilled": self.fulfilled,
             "gig_id": self.gig_id,
-            "created_at": self.created_at
+            "created_at": self.created_at.isoformat()
         }
