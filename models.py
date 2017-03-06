@@ -13,7 +13,6 @@ db = SQLAlchemy()
 
 
 class Gig(db.Model):
-    __tableName__ = "gigs"
     id = db.Column(db.Integer, primary_key=True)
     issuer = db.Column(db.String(100))
     description = db.Column(db.String(150))
@@ -35,11 +34,10 @@ class Gig(db.Model):
 
 
 class Claim(db.Model):
-    __tableName__ = "claims"
     id = db.Column(db.Integer, primary_key=True)
     claimant = db.Column(db.String(100))
     fulfilled = db.Column(db.Boolean, default=False)
-    gig_id = db.Column(db.Integer, db.ForeignKey('gigs.id'))
+    gig_id = db.Column(db.Integer, db.ForeignKey('gig.id'))
     created_at = db.Column(db.DateTime, default=datetime.now, nullable=False)
 
     def to_dict(self):
