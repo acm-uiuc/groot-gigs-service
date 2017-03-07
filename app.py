@@ -165,11 +165,19 @@ class ClaimResource(Resource):
             validate_gig_id(args.gig_id)
         except ValueError:
             return send_error('Invalid gid id', 404)
+        
         gig = Gig.query.filter_by(id=args.gig_id).first()
+        
         if not gig.active:
             return send_error("Cannot claim an inactive gig")
+        
         if gig.issuer == args.claimant:
             return send_error("Cannot claim your own gig")
+
+        double_claim = Claim.query.filter_by(
+            claimant=args.claimant, gig_id=gig.id).first()
+        if double_claim:
+            return send_error("Cannot double claim a gig")
 
         claim = Claim(claimant=args.claimant,
                       gig_id=args.gig_id)
