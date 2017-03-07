@@ -37,9 +37,35 @@ python app.py
 
 Returns list of gigs.
 
+Each gig "looks like":
+
+```
+{
+    "active": true,
+    "created_at": "2017-03-06T14:15:10",
+    "credits": 1.23,
+    "description": "Clean up the office",
+    "id": 12345,
+    "issuer": "bcongdo2"
+}
+```
+
 #### GET /gigs/:gig_id
 
 Returns information about a specific gig.
+
+Each gig "looks like":
+
+```
+{
+    "active": true,
+    "created_at": "2017-03-06T14:15:10",
+    "credits": 1.23,
+    "description": "Clean up the office",
+    "id": 12345,
+    "issuer": "bcongdo2"
+}
+```
 
 #### POST /gigs
 
@@ -76,11 +102,42 @@ Deletes the specified Gig.
 
 Returns list of claims.
 
+*URL Params:*
+* `gig_id` - Filter by associated gig id
+    * Optional
+    * Type: Int
+
+Each claim "looks like":
+
+```
+{
+    "claimant": "bcongdo2",
+    "created_at": "2017-03-06T15:26:45",
+    "fulfilled": false,
+    "gig_id": 5,
+    "id": 2
+}
+```
+
 #### POST /gigs/claims
+
+Endpoint for creating a claim
+
+*Body Params:*
+
+* `claimant` - NetID of user making claim
+    * Required
+* `gig_id` - ID of gig being claimed
+    * Required
+    * Type: int
 
 #### PUT /gigs/claims/:claim_id
 
+Endpoint for fulfilling a claim
+
 #### DELETE /gigs/claims/:claim_id
+
+Endpoint for deleting a claim. Creates transactions to transfer credits to claimant as necessary.
 
 ## Contributing
 
