@@ -8,13 +8,13 @@ this license in a file with the distribution.
 '''
 from flask import Flask, jsonify
 from flask_restful import Resource, Api, reqparse
-import os
 from models import db, Gig, Claim
 from settings import MYSQL, GROOT_ACCESS_TOKEN, GROOT_SERVICES_URL
 from utils import send_error, send_success
+import json
+import os
 import requests
 import logging
-import json
 logger = logging.getLogger('groot_meme_service')
 
 app = Flask(__name__)
