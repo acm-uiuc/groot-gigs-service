@@ -83,15 +83,33 @@ class GigResource(Resource):
                 return send_error('Invalid gid id', 404)
             gig = Gig.query.filter_by(id=gigid).first()
             return jsonify(gig.to_dict())
-        # Return all gigs
-        else:
-            return jsonify([g.to_dict() for g in Gig.query.all()])
+
+        # Return gig list
+        query_types = ['active', 'mine', 'claimed']
+        parser = reqparse.RequestParser()
+        parser.add_argument('filter', choices=query_types,
+                            default='active', location='args')
+        parser.add_argument('page', location='args', default=1,
+                            type=int)
+        args = parser.parse_args()
+        gigs = Gig.query
+        page = gigs.paginate(page=args.page, per_page=24)
+        gigs_dict = [g.to_dict() for g in page.items]
+
+        return jsonify({
+            'gigs': gigs_dict,
+            'page': args.page,
+            'num_pages': page.pages,
+            'next_page': page.next_num if page.has_next else None,
+            'prev_page': page.prev_num if page.has_prev else None
+        })
 
     def post(self, gigid=None):
         ''' Endpoint for creating a Gig '''
         parser = reqparse.RequestParser()
         parser.add_argument('issuer', location='json', required=True)
-        parser.add_argument('description', location='json', default="")
+        parser.add_argument('title', location='json', required=True)
+        parser.add_argument('details', location='json', default="")
         parser.add_argument('credits', location='json', required=True,
                             type=validate_gig_credits)
         parser.add_argument('admin_task', location='json', type=bool,
@@ -99,7 +117,8 @@ class GigResource(Resource):
 
         args = parser.parse_args()
         gig = Gig(issuer=args.issuer,
-                  description=args.description,
+                  title=args.title,
+                  details=args.details,
                   credits=args.credits,
                   admin_task=args.admin_task)
         db.session.add(gig)

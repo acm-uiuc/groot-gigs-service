@@ -15,7 +15,8 @@ db = SQLAlchemy()
 class Gig(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     issuer = db.Column(db.String(100))
-    description = db.Column(db.String(150))
+    title = db.Column(db.String(100))
+    details = db.Column(db.String(150))
     credits = db.Column(db.Float())
     admin_task = db.Column(db.Boolean, default=False)
     claims = db.relationship('Claim', backref='gig', lazy='dynamic')
@@ -25,8 +26,9 @@ class Gig(db.Model):
     def to_dict(self):
         return {
             "id": self.id,
+            "title": self.title,
             "issuer": self.issuer,
-            "description": self.description,
+            "details": self.details,
             "credits": self.credits,
             "created_at": self.created_at.isoformat(),
             "active": self.active
