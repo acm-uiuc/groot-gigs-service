@@ -85,14 +85,24 @@ class GigResource(Resource):
             return jsonify(gig.to_dict())
 
         # Return gig list
-        query_types = ['active', 'mine', 'claimed']
         parser = reqparse.RequestParser()
-        parser.add_argument('filter', choices=query_types,
-                            default='active', location='args')
         parser.add_argument('page', location='args', default=1,
                             type=int)
+        parser.add_argument('issuer', location='args')
+        parser.add_argument('active', location='args', type=bool, default=True)
+        parser.add_argument('claimed_by', location='args')
         args = parser.parse_args()
+
         gigs = Gig.query
+        if args.issuer:
+            gigs = gigs.filter_by(issuer=args.issuer)
+
+        if args.active:
+            gigs = gigs.filter_by(active=True)
+
+        if args.claimed_by:
+            gigs = gigs.join(Claim).filter(Claim.claimant == args.claimed_by)
+
         page = gigs.paginate(page=args.page, per_page=24)
         gigs_dict = [g.to_dict() for g in page.items]
 
