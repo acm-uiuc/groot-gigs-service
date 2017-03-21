@@ -93,7 +93,7 @@ class GigResource(Resource):
         parser.add_argument('claimed_by', location='args')
         args = parser.parse_args()
 
-        gigs = Gig.query
+        gigs = Gig.query.order_by(Gig.created_at.desc())
         if args.issuer:
             gigs = gigs.filter_by(issuer=args.issuer)
 
@@ -136,25 +136,19 @@ class GigResource(Resource):
         return jsonify(gig.to_dict())
 
     def put(self, gigid):
-        ''' Endpoint for activating/deactivating a gig '''
-        parser = reqparse.RequestParser()
-        parser.add_argument('active', location='json', type=bool,
-                            required=True)
-        args = parser.parse_args()
-
+        ''' Endpoint for deactivating a gig '''
         try:
             validate_gig_id(gigid)
         except ValueError:
             return send_error('Invalid gid id', 404)
 
         gig = Gig.query.filter_by(id=gigid).first()
-        gig.active = args.active
+        gig.active = False
 
         db.session.add(gig)
         db.session.commit()
 
-        active_str = 'active' if args.active else 'closed'
-        return send_success('Set gig {} to be {}'.format(gigid, active_str))
+        return send_success('Set gig {} to be closed'.format(gigid))
 
     def delete(self, gigid):
         ''' Endpoint for deleting a Gig '''
@@ -174,12 +168,15 @@ class ClaimResource(Resource):
         ''' Endpoint for getting Claim information '''
         parser = reqparse.RequestParser()
         parser.add_argument('gig_id', location='args')
+        parser.add_argument('claimant', location='args')
         args = parser.parse_args()
 
-        claims = Claim.query
+        claims = Claim.query.order_by(Claim.created_at.desc())
 
         if args.gig_id:
             claims = claims.filter_by(gig_id=args.gig_id)
+        if args.claimant:
+            claims = claims.filter_by(claimant=args.claimant)
         return jsonify([c.to_dict() for c in claims.all()])
 
     def post(self, claimid=None):
