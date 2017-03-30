@@ -48,5 +48,6 @@ class Claim(db.Model):
             "claimant": self.claimant,
             "fulfilled": self.fulfilled,
             "gig_id": self.gig_id,
-            "created_at": self.created_at.isoformat()
+            "created_at": self.created_at.isoformat(),
+            "issuer": self.gig.issuer,
         }

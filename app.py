@@ -166,6 +166,13 @@ class GigResource(Resource):
 class ClaimResource(Resource):
     def get(self, claimid=None):
         ''' Endpoint for getting Claim information '''
+        if claimid:
+            try:
+                validate_claim_id(claimid)
+            except ValueError:
+                return send_error("Invalid claim id")
+            return jsonify(Claim.query.filter_by(id=claimid).first().to_dict())
+
         parser = reqparse.RequestParser()
         parser.add_argument('gig_id', location='args')
         parser.add_argument('claimant', location='args')
