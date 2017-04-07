@@ -17,7 +17,7 @@ class Gig(db.Model):
     issuer = db.Column(db.String(100))
     title = db.Column(db.String(100))
     details = db.Column(db.String(150))
-    credits = db.Column(db.Float())
+    credits = db.Column(db.Integer)
     admin_task = db.Column(db.Boolean, default=False)
     claims = db.relationship('Claim', backref='gig', lazy='dynamic')
     active = db.Column(db.Boolean, default=True)
