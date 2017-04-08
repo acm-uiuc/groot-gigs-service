@@ -32,7 +32,7 @@ DEBUG = os.environ.get('GIG_DEBUG', False)
 
 
 def validate_gig_credits(x):
-    x = float(x)
+    x = int(x)
     if x <= 0:
         raise ValueError("Credits must be positive")
     return x
