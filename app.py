@@ -89,8 +89,7 @@ class GigResource(Resource):
         parser.add_argument('page', location='args', default=1,
                             type=int)
         parser.add_argument('issuer', location='args')
-        parser.add_argument('active', location='args', type=inputs.boolean,
-                            default=True)
+        parser.add_argument('active', location='args', type=inputs.boolean)
         parser.add_argument('claimed_by', location='args')
         args = parser.parse_args()
 
@@ -149,6 +148,7 @@ class GigResource(Resource):
         parser.add_argument('details', location='json')
         parser.add_argument('credits', location='json',
                             type=validate_gig_credits)
+        parser.add_argument('admin_task', location='json', type=inputs.boolean)
         args = parser.parse_args()
 
         gig = Gig.query.filter_by(id=gigid).first()
@@ -156,6 +156,8 @@ class GigResource(Resource):
         gig.title = args.title if args.title else gig.title
         gig.details = args.details if args.details else gig.details
         gig.credits = args.credits if args.credits else gig.credits
+        gig.admin_task = (args.admin_task if args.admin_task is not None
+                          else gig.admin_task)
 
         db.session.add(gig)
         db.session.commit()
