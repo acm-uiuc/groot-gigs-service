@@ -7,7 +7,7 @@ Illinois/NCSA Open Source License.  You should have received a copy of
 this license in a file with the distribution.
 '''
 from flask import Flask, jsonify
-from flask_restful import Resource, Api, reqparse
+from flask_restful import Resource, Api, reqparse, inputs
 from models import db, Gig, Claim
 from settings import MYSQL, GROOT_ACCESS_TOKEN, GROOT_SERVICES_URL
 from utils import send_error, send_success
@@ -89,7 +89,7 @@ class GigResource(Resource):
         parser.add_argument('page', location='args', default=1,
                             type=int)
         parser.add_argument('issuer', location='args')
-        parser.add_argument('active', location='args', type=bool, default=True)
+        parser.add_argument('active', location='args', type=inputs.boolean)
         parser.add_argument('claimed_by', location='args')
         args = parser.parse_args()
 
@@ -122,7 +122,7 @@ class GigResource(Resource):
         parser.add_argument('details', location='json', default="")
         parser.add_argument('credits', location='json', required=True,
                             type=validate_gig_credits)
-        parser.add_argument('admin_task', location='json', type=bool,
+        parser.add_argument('admin_task', location='json', type=inputs.boolean,
                             default=False)
 
         args = parser.parse_args()
@@ -136,19 +136,33 @@ class GigResource(Resource):
         return jsonify(gig.to_dict())
 
     def put(self, gigid):
-        ''' Endpoint for deactivating a gig '''
+        ''' Endpoint for editing a gig '''
         try:
             validate_gig_id(gigid)
         except ValueError:
             return send_error('Invalid gid id', 404)
 
+        parser = reqparse.RequestParser()
+        parser.add_argument('active', location='json', type=inputs.boolean)
+        parser.add_argument('title', location='json')
+        parser.add_argument('details', location='json')
+        parser.add_argument('credits', location='json',
+                            type=validate_gig_credits)
+        parser.add_argument('admin_task', location='json', type=inputs.boolean)
+        args = parser.parse_args()
+
         gig = Gig.query.filter_by(id=gigid).first()
-        gig.active = False
+        gig.active = args.active if args.active is not None else gig.active
+        gig.title = args.title if args.title else gig.title
+        gig.details = args.details if args.details else gig.details
+        gig.credits = args.credits if args.credits else gig.credits
+        gig.admin_task = (args.admin_task if args.admin_task is not None
+                          else gig.admin_task)
 
         db.session.add(gig)
         db.session.commit()
 
-        return send_success('Set gig {} to be closed'.format(gigid))
+        return jsonify(gig.to_dict())
 
     def delete(self, gigid):
         ''' Endpoint for deleting a Gig '''

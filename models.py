@@ -24,15 +24,20 @@ class Gig(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.now, nullable=False)
 
     def to_dict(self):
-        return {
-            "id": self.id,
-            "title": self.title,
-            "issuer": self.issuer,
-            "details": self.details,
-            "credits": self.credits,
-            "created_at": self.created_at.isoformat(),
-            "active": self.active
+        payload = {
+            'id': self.id,
+            'title': self.title,
+            'issuer': self.issuer,
+            'details': self.details,
+            'credits': self.credits,
+            'created_at': self.created_at.isoformat(),
+            'active': self.active
         }
+
+        if self.admin_task:
+            payload['admin_task'] = True
+
+        return payload
 
 
 class Claim(db.Model):
@@ -44,10 +49,10 @@ class Claim(db.Model):
 
     def to_dict(self):
         return {
-            "id": self.id,
-            "claimant": self.claimant,
-            "fulfilled": self.fulfilled,
-            "gig_id": self.gig_id,
-            "created_at": self.created_at.isoformat(),
-            "issuer": self.gig.issuer,
+            'id': self.id,
+            'claimant': self.claimant,
+            'fulfilled': self.fulfilled,
+            'gig_id': self.gig_id,
+            'created_at': self.created_at.isoformat(),
+            'issuer': self.gig.issuer,
         }
