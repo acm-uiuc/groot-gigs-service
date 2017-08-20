@@ -280,6 +280,7 @@ class ClaimResource(Resource):
         db.session.commit()
         return send_success('Deleted claim {}'.format(claimid))
 
+
 api = Api(app)
 api.add_resource(GigResource, '/gigs', '/gigs/<gigid>')
 api.add_resource(ClaimResource, '/gigs/claims', '/gigs/claims/<claimid>')

@@ -1,5 +1,7 @@
 # groot-gig-service
 
+[![Build Status](https://travis-ci.org/acm-uiuc/groot-gigs-service.svg?branch=master)](https://travis-ci.org/acm-uiuc/groot-gigs-service)
+
 Supporting the Groot economy
 
 Groot core development:
